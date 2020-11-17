@@ -31,6 +31,7 @@ function pay($atts,$content=null,$shortcode){
 	
 	if($pieces['0'] == 'razorpay'){
 		//require_once ($plugin_path."/monoframe/razorpay-php/Razorpay.php"); //Razorpay.php
+		require_once AWESOME_PATH.'/vendor/autoload.php';
 		$pay=new aw2_razor_payments($pieces['1'],$atts,$content);
 		$return_value=$pay->run();
 	}

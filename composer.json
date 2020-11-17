@@ -2,8 +2,8 @@
     "name": "wpoets/payments-handler",
     "license": "GPL-3.0-or-later",
     "type": "awesome-handler",
-    "description": "Handler for Payment gateway integrations in Awesome Enterprise",
-	"keywords": ["WordPress", "Low Code"," Awesome Enterprise","Shortcode","SBI API","Razorpay"],
+    "description": "Adds support for payment gateway integrations by introducing aw2.pay shortcode",
+	"keywords": ["WordPress", "Low Code"," Awesome Enterprise","Shortcode","SBI API","Razorpay","Payment gateway"],
 	"homepage": "https://getawesomestudio.com/",
 	"authors": [
 		{
