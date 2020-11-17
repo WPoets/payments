@@ -15,10 +15,10 @@ function pay($atts,$content=null,$shortcode){
 	$return_value='';
 	$pieces=explode('.',$main);
 
-	$plugin_path=dirname(plugin_dir_path( __DIR__ )).'/awesome-enterprise';
+	//$plugin_path=dirname(plugin_dir_path( __DIR__ )).'/awesome-enterprise';
 
 	if($pieces['0'] == 'sbi'){
-		require_once ($plugin_path."/libraries/pay-sbi/api.php"); //SBI
+		require_once __dir__ .'/includes/pay-sbi/api.php"); //SBI
 
 		$pay=new aw2_sbi_payments($pieces['1'],$atts,$content);
 		$return_value=$pay->run();
@@ -30,7 +30,7 @@ function pay($atts,$content=null,$shortcode){
 	}
 	
 	if($pieces['0'] == 'razorpay'){
-		require_once ($plugin_path."/monoframe/razorpay-php/Razorpay.php"); //Razorpay.php
+		//require_once ($plugin_path."/monoframe/razorpay-php/Razorpay.php"); //Razorpay.php
 		$pay=new aw2_razor_payments($pieces['1'],$atts,$content);
 		$return_value=$pay->run();
 	}
@@ -183,6 +183,7 @@ class aw2_sbi_payments{
 	}
 }
 
+
 class aw2_razor_payments{
 	public $action=null;
 	public $atts=null;
@@ -228,10 +229,21 @@ class aw2_razor_payments{
 		return $return_value;	
 	}
 	
+	public function get($atts){
+		$api = new \Razorpay\Api\Api($atts['api_key'], $atts['api_secret']);
+		$options = array(
+					'from' => $atts['from'], 
+					'to' => $atts['to'],
+					'count' => '100'
+				);
+		
+		$orders = $api->payment->all($options);;
+		return $orders;	 
+	}
+	
 	private function pay(){
 		
 		$args = $this->args();
-		
 		
 		$api = new \Razorpay\Api\Api($this->api_key, $this->api_secret);
 		$data = array(
