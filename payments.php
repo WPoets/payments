@@ -18,7 +18,7 @@ function pay($atts,$content=null,$shortcode){
 	//$plugin_path=dirname(plugin_dir_path( __DIR__ )).'/awesome-enterprise';
 
 	if($pieces['0'] == 'sbi'){
-		require_once __dir__ .'/includes/pay-sbi/api.php"); //SBI
+		require_once __dir__ .'/includes/pay-sbi/api.php'; //SBI
 
 		$pay=new aw2_sbi_payments($pieces['1'],$atts,$content);
 		$return_value=$pay->run();
@@ -31,7 +31,7 @@ function pay($atts,$content=null,$shortcode){
 	
 	if($pieces['0'] == 'razorpay'){
 		//require_once ($plugin_path."/monoframe/razorpay-php/Razorpay.php"); //Razorpay.php
-		require_once AWESOME_PATH.'/vendor/autoload.php';
+		//require_once AWESOME_PATH.'/vendor/autoload.php';
 		$pay=new aw2_razor_payments($pieces['1'],$atts,$content);
 		$return_value=$pay->run();
 	}
