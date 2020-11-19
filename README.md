@@ -22,7 +22,7 @@ If you don't find your issue already listed, do [create an issue](https://github
 ##### 1.0.0  
 * Initial release
 
-## Interesting? We're Hiring!
+## We're Hiring!
 
 <p align="center">
 <a href="https://www.wpoets.com/careers/">Career opportunities at WPoets</a>
