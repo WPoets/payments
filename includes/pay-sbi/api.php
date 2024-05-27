@@ -6,66 +6,84 @@ SBI Payment Gateway Helper
 namespace aw2;
 
 class SBI_Pay {
-	//static $iv ='1234567890123456';
-	const METHOD = 'AES-128-CBC';
+	//static $iv ='';
+	//const METHOD = 'AES-128-CBC';
+	const METHOD = 'aes-256-gcm';
 	//static $prod_url = 'https://www.onlinesbi.com/merchant/merchantprelogin.htm';
-	static $prod_url = 'https://merchant.onlinesbi.com/merchant/merchantprelogin.htm';
-	static $uat_url = 'https://uatmerchant.onlinesbi.com/merchantgst/merchantprelogin.htm';
+	//static $prod_url = 'https://www.onlinesbi.com/merchant/merchantprelogin.htm';
+	static $prod_url = 'https://merchant.onlinesbi.sbi/merchant/merchantprelogin.htm';
+	static $uat_url = 'https://uatmerchant.onlinesbi.sbi/merchantgst/merchantprelogin.htm';
+
+	//static $uat_url_new = 'https://uatmerchant.onlinesbi.sbi/merchant/merchantprelogin.htm';
+	  static $uat_url_new = 'https://uatmerchant.onlinesbi.sbi/merchant/merchantprelogin.htm';
+	  static $uat_verify_url_new = 'https://uatmerchant.onlinesbi.sbi/merchant/doubleverification.htm';
+
 	//static $prod_verify_url = 'https://www.onlinesbi.com/thirdparties/doubleverification.htm';
-	static $prod_verify_url = 'https://merchant.onlinesbi.com/thirdparties/doubleverification.htm';
-	static $uat_verify_url = 'https://uatmerchant.onlinesbi.com/thirdparties/doubleverification.htm';
+	static $prod_verify_url = 'https://merchant.onlinesbi.sbi/thirdparties/doubleverification.htm';
+	//static $uat_verify_url = 'https://uatmerchant.onlinesbi.com/thirdparties/doubleverification.htm';
+	static $uat_verify_url = 'https://uatmerchant.onlinesbi.sbi/thirdparties/doubleverification.htm';
+	
+	public static function make_string($args){
+			$str=array();
+			foreach($args as $key=>$value){
+				$str[] = $key.'='.$value;
+			}
+			$str = implode('|',$str);
+			$str = $str.'|checkSum='.hash('sha256', $str); 
+			return $str;
+		}
+
 	public static function sbi_encrypt($message, $key,$iv){
-        if (mb_strlen($key, '8bit') !== 16) {
-            throw new Exception("Needs a 256-bit key! " .mb_strlen($key, '8bit'));
+		$tag='';
+        if (mb_strlen($key, '8bit') !== 32) {
+            throw new \Exception("Needs a 256-bit key! " .mb_strlen($key, '8bit'));
         }
-             
-        $ciphertext = openssl_encrypt(
-            $message,
-            self::METHOD,
-            $key,
-            0,
-            $iv
-        );
-        
-        return $ciphertext;
+
+        $ciphertext = openssl_encrypt($message,self::METHOD,$key, OPENSSL_RAW_DATA,$iv, $tag);
+
+        $finalEncryption= base64_encode($iv . $ciphertext.$tag);
+        return $finalEncryption;
     }
 	
 	public static function sbi_decrypt($ciphertext, $key,$iv){
-        if (mb_strlen($key, '8bit') !== 16) {
-            throw new Exception("Needs a 256-bit key!");
+		$tag='';
+        if (mb_strlen($key, '8bit') !== 32) {
+            throw new \Exception("Needs a 256-bit key!");
         }
 		
-	      
-        return openssl_decrypt(
-            $ciphertext,
-            self::METHOD,
-            $key,
-            0,
-            $iv
-        );
+		$c = base64_decode($ciphertext);
+		$datalength=strlen($c);
+		$ivlen = openssl_cipher_iv_length(self::METHOD);
+		
+		$ciphertext_raw = substr($c,16,$datalength-32);
+		$aad=substr($c,$datalength-16,16);
+		$original_plaintext = openssl_decrypt($ciphertext_raw, $cipher, $key, $options=OPENSSL_RAW_DATA, $iv, $tag);  
+		return $original_plaintext;
+	  
     }
 	
-	public static function process_payment($dev_mode='on', $encdata='',$merchant_code=''){
+	public static function process_payment($dev_mode='on', $encdata='',$merchant_code='', $submit_form = true){
 		if(empty($encdata)){
-			aw2_library::set_error('encdata is empty'); 
+			\aw2_library::set_error('encdata is empty'); 
 			return;
 		}
 		
 		if(empty($merchant_code)){
-			aw2_library::set_error('merchant code is empty'); 
+			\aw2_library::set_error('merchant code is empty'); 
 			return;
 		}
 			
 		$url=self::$prod_url;
-		if($dev_mode=='on')
-			$url=self::$uat_url;
+		if(strtolower($dev_mode)=='on')
+			$url=self::$uat_url_new;
+
 		$form ='
 		<form name="paymentform" id="paymentform" method="POST" action="'.$url.'">
 			<input type="hidden" name="encdata" value="'.$encdata.'"/>
 			<input type="hidden" name="merchant_code" value="'.$merchant_code.'"/>
 		</form>
-		<script>
-			document.paymentform.submit();
+		<script>	
+		 '.(!$submit_form ? '// comment ' : '').'document.paymentform.submit();
 		</script>
 		';
 		
@@ -74,12 +92,12 @@ class SBI_Pay {
 	public static function re_verify_payment($dev_mode='on', $data='',$merchant_code='',$key, $iv){
 		
 		if(empty($data)){
-			aw2_library::set_error('data is empty'); 
+			\aw2_library::set_error('data is empty'); 
 			return;
 		}
 		
 		if(empty($merchant_code)){
-			aw2_library::set_error('merchant code is empty'); 
+			\aw2_library::set_error('merchant code is empty'); 
 			return;
 		}
 		
@@ -129,7 +147,7 @@ class SBI_Pay {
 			}
 		}
 		else{
-			aw2_library::set_error('verification checksum failed'); 
+			\aw2_library::set_error('verification checksum failed'); 
 			return ;
 		}
 		
@@ -139,12 +157,12 @@ class SBI_Pay {
 	public static function verify_payment($dev_mode='on', $encdata='',$merchant_code='',$key, $iv){
 		
 		if(empty($encdata)){
-			aw2_library::set_error('encdata is empty'); 
+			\aw2_library::set_error('encdata is empty'); 
 			return;
 		}
 		
 		if(empty($merchant_code)){
-			aw2_library::set_error('merchant code is empty'); 
+			\aw2_library::set_error('merchant code is empty'); 
 			return;
 		}
 		
@@ -158,7 +176,9 @@ class SBI_Pay {
 		
 		$tmp_checksum=md5($dec_data);
 	
-		if($tmp_checksum == $checksum[1]){
+		$tmp_checksum=hash('sha256', $dec_data);
+
+		if(trim($tmp_checksum) == trim($checksum[1])){
 			$temp = explode ('|',$dec_data);
 			foreach ($temp as $pair) 
 			{
@@ -167,12 +187,12 @@ class SBI_Pay {
 			}
 		}
 		else{
-			aw2_library::set_error('checksum failed'); 
+			\aw2_library::set_error('checksum failed'); 
 			return ;
 		}
 			
 		$url=self::$prod_verify_url;
-		if($dev_mode=='on')
+		if(strtolower($dev_mode)=='on')
 			$url=self::$uat_verify_url;
 		
 		//$url='https://uatmerchant.onlinesbi.com/thirdparties/doubleverification.htm';
@@ -201,11 +221,11 @@ class SBI_Pay {
 		
 		$v_dec_data = implode('|',$v_dec_data);
 		
-		$tmp_checksum=md5($v_dec_data);
-		
+		$tmp_checksum=hash('sha256', $v_dec_data);
+
 		$vpairs=array();
-		
-		if($tmp_checksum == $checksum[1]){
+
+		if(trim($tmp_checksum) == trim($checksum[1])){
 			
 			$temp = explode ('|',$v_dec_data);
 			foreach ($temp as $pair) 
@@ -215,7 +235,7 @@ class SBI_Pay {
 			}
 		}
 		else{
-			aw2_library::set_error('verification checksum failed'); 
+			\aw2_library::set_error('verification checksum failed'); 
 			return ;
 		}
 		
