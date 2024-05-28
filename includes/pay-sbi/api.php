@@ -248,7 +248,7 @@ class SBI_Pay {
 /* 
 function aw2_sbi_decrypt($encd){
 	$key=(file_get_contents('/var/www/ilslaw.edu/ILSLAWCOLLEGE.key', true));
-	$iv ='1234567890123456';
+	$iv ='1234567890123467567';
 	$dec_data=SBI_Pay::sbi_decrypt($encd,$key,$iv);
 	
 	$dec_data=explode('|',$dec_data);
@@ -277,7 +277,7 @@ function aw2_sbi_decrypt($encd){
 
 function aw2_sbi_dv_setup($data){
 	$key=(file_get_contents('/var/www/ilslaw.edu/ILSLAWCOLLEGE.key', true));
-	$iv ='1234567890123456';
+	$iv ='1234567890123467567';
 	
 	//$dec_data=SBI_Pay::sbi_decrypt($encd,$key);
 	$verification_string ="ref_no=".$data['ref_no']."|amount=".$data['amount'] ;
