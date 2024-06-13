@@ -15,6 +15,7 @@ class SBI_Pay {
 	static $uat_url = 'https://uatmerchant.onlinesbi.sbi/merchantgst/merchantprelogin.htm';
 
 	//static $uat_url_new = 'https://uatmerchant.onlinesbi.sbi/merchant/merchantprelogin.htm';
+	  //static $uat_url_new = 'https://uatmerchant.onlinesbi.sbi/merchant/merchantprelogin.htm';
 	  static $uat_url_new = 'https://uatmerchant.onlinesbi.sbi/merchant/merchantprelogin.htm';
 	  static $uat_verify_url_new = 'https://uatmerchant.onlinesbi.sbi/merchant/doubleverification.htm';
 
@@ -51,13 +52,17 @@ class SBI_Pay {
             throw new \Exception("Needs a 256-bit key!");
         }
 		
+		
+		
 		$c = base64_decode($ciphertext);
+		
 		$datalength=strlen($c);
 		$ivlen = openssl_cipher_iv_length(self::METHOD);
 		
 		$ciphertext_raw = substr($c,16,$datalength-32);
-		$aad=substr($c,$datalength-16,16);
-		$original_plaintext = openssl_decrypt($ciphertext_raw, $cipher, $key, $options=OPENSSL_RAW_DATA, $iv, $tag);  
+		$tag=substr($c,$datalength-16,16);
+		$original_plaintext = openssl_decrypt($ciphertext_raw, self::METHOD, $key, $options=OPENSSL_RAW_DATA, $iv, $tag);  
+		
 		return $original_plaintext;
 	  
     }
@@ -110,8 +115,9 @@ class SBI_Pay {
 		//$url='https://uatmerchant.onlinesbi.com/thirdparties/doubleverification.htm';
 		
 		$verification_string ="ref_no=".$data['ref_no']."|amount=".$data['amount'] ;
-		$verification_string .="|checkSum=".md5($verification_string);
-		
+		//$verification_string .="|checkSum=".md5($verification_string);
+		$verification_string .="|checkSum=".hash('sha256', $verification_string);
+			
 		$rencdata=SBI_Pay::sbi_encrypt($verification_string, $key,$iv);
 		$v_data= array(
 			"body"=>array(
@@ -127,17 +133,18 @@ class SBI_Pay {
 		$v_dec_data=self::sbi_decrypt($sbiresponse['body'],$key,$iv);
 		
 		$v_dec_data=explode('|',$v_dec_data);
-		
+	
 		$checksum=array_pop($v_dec_data);
 		$checksum=explode('=',$checksum);
-		
+	
 		$v_dec_data = implode('|',$v_dec_data);
 		
-		$tmp_checksum=md5($v_dec_data);
+		//$tmp_checksum=md5($v_dec_data);
+		$tmp_checksum=hash('sha256', $v_dec_data);
 		
-		$vpairs=array();
-		
-		if($tmp_checksum == $checksum[1]){
+		$vpairs=array();	
+			
+		if($tmp_checksum == trim($checksum[1])){
 			
 			$temp = explode ('|',$v_dec_data);
 			foreach ($temp as $pair) 
@@ -147,7 +154,7 @@ class SBI_Pay {
 			}
 		}
 		else{
-			\aw2_library::set_error('verification checksum failed'); 
+			\aw2_library::set_error('re verification checksum failed'); 
 			return ;
 		}
 		
@@ -174,7 +181,6 @@ class SBI_Pay {
 		
 		$dec_data = implode('|',$dec_data);
 		
-		$tmp_checksum=md5($dec_data);
 	
 		$tmp_checksum=hash('sha256', $dec_data);
 
@@ -198,7 +204,7 @@ class SBI_Pay {
 		//$url='https://uatmerchant.onlinesbi.com/thirdparties/doubleverification.htm';
 		
 		$verification_string ="ref_no=".$pairs['ref_no']."|amount=".$pairs['amount'] ;
-		$verification_string .="|checkSum=".md5($verification_string);
+		$verification_string .="|checkSum=".hash('sha256', $verification_string);
 		
 		$rencdata=SBI_Pay::sbi_encrypt($verification_string, $key,$iv);
 		$v_data= array(
@@ -211,7 +217,7 @@ class SBI_Pay {
 		// [aw2.get function.wp_remote_post p1='https://uatmerchant.onlinesbi.com/thirdparties/doubleverification.htm ' p2="{dbv}" set='sbiresponse'/]
 		
 		$sbiresponse = wp_remote_post($url,$v_data);
-				
+			
 		$v_dec_data=self::sbi_decrypt($sbiresponse['body'],$key,$iv);
 		
 		$v_dec_data=explode('|',$v_dec_data);
@@ -224,6 +230,7 @@ class SBI_Pay {
 		$tmp_checksum=hash('sha256', $v_dec_data);
 
 		$vpairs=array();
+		
 
 		if(trim($tmp_checksum) == trim($checksum[1])){
 			

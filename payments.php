@@ -104,6 +104,8 @@ class aw2_sbi_payments{
 		$str = $str.'|checkSum='.md5($str);
 		
 		$key=(file_get_contents($this->key_path, true));
+		
+		//\util::var_dump($str);
 		$encdata=SBI_Pay::sbi_encrypt($str, $key,$this->iv);
 		
 		$form = SBI_Pay::process_payment($this->dev_mode, $encdata,$this->merchant_code);
@@ -123,15 +125,15 @@ class aw2_sbi_payments{
 				
 		$dec_data=SBI_Pay::sbi_decrypt($this->atts['encdata'],$key,$this->iv);
 		$dec_data=explode('|',$dec_data);
-		
+
 		$checksum=array_pop($dec_data);
 		$checksum=explode('=',$checksum);
-		
+		 
 		$dec_data = implode('|',$dec_data);
-		
-		$tmp_checksum=md5($dec_data);
-	
-		if($tmp_checksum == $checksum[1]){
+
+		$tmp_checksum=hash('sha256', $dec_data);
+
+		if(trim($tmp_checksum) == trim($checksum[1])){
 			$temp = explode ('|',$dec_data);
 			foreach ($temp as $pair) 
 			{
